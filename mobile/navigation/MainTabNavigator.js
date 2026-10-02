@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/main/HomeScreen';
 import WardrobeScreen from '../screens/main/WardrobeScreen';
 import LooksScreen from '../screens/main/LooksScreen';
-import FavoritesScreen from '../screens/main/FavoritesScreen';
+import FavoriteScreen from '../screens/main/FavoriteScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 
 import { COLORS } from '../constants/colors';
@@ -66,7 +66,7 @@ export default function MainTabNavigator() {
 
       <Tab.Screen
         name="Favorites"
-        component={FavoritesScreen}
+        component={FavoriteScreen}
         options={{
           title: 'Favoritos',
           tabBarIcon: () => <Text>♡</Text>,
