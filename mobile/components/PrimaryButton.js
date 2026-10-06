@@ -43,13 +43,14 @@ export default function PrimaryButton({
 
 const styles = StyleSheet.create({
   button: {
-    width: '90%',
-    minHeight: 52,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.primary,
-  },
+  width: '95%',
+  height: 52,
+  borderRadius: 12,
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: COLORS.primary,
+  alignSelf: 'center',
+},
 
   outlineButton: {
     backgroundColor: 'transparent',

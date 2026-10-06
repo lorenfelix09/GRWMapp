@@ -1,59 +1,248 @@
-import React from 'react';
+import React, { useState } from 'react';
+
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
+  Image,
 } from 'react-native';
 
-import theme from '../../theme';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+
+import {
+  colors,
+  spacing,
+  radius,
+  typography,
+} from '../../theme';
 
 export default function GRWMModal({
   visible,
-  title,
-  message,
   onClose,
-  onConfirm,
-  confirmText = 'Confirmar',
-  cancelText = 'Cancelar',
+  onSave,
 }) {
+  const [name, setName] = useState('');
+  const [color, setColor] = useState('');
+  const [category, setCategory] = useState('');
+  const [image, setImage] = useState(null);
+
+  const categories = [
+    'Blusas',
+    'Calças',
+    'Saias',
+    'Vestidos',
+    'Sapatos',
+    'Acessórios',
+  ];
+
+  async function handlePickImage() {
+    const permission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      return;
+    }
+
+    const result =
+      await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  }
+
+  function handleSave() {
+    const piece = {
+      name,
+      category,
+      color,
+      image,
+    };
+
+    if (onSave) {
+      onSave(piece);
+    }
+
+    setName('');
+    setCategory('');
+    setColor('');
+    setImage(null);
+
+    onClose();
+  }
+
+  function handleClose() {
+    setName('');
+    setCategory('');
+    setColor('');
+    setImage(null);
+
+    onClose();
+  }
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
-      onRequestClose={onClose}
+      animationType="slide"
+      onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
+
         <View style={styles.container}>
-          <Text style={styles.title}>
-            {title}
-          </Text>
 
-          <Text style={styles.message}>
-            {message}
-          </Text>
-
-          <View style={styles.actions}>
-            <Pressable
-              onPress={onClose}
-              style={styles.cancelButton}
-            >
-              <Text style={styles.cancelText}>
-                {cancelText}
-              </Text>
-            </Pressable>
+          {/* CABEÇALHO */}
+          <View style={styles.header}>
+            <Text style={styles.title}>
+              Adicionar peça
+            </Text>
 
             <Pressable
-              onPress={onConfirm}
-              style={styles.confirmButton}
+              onPress={handleClose}
+              style={styles.closeButton}
             >
-              <Text style={styles.confirmText}>
-                {confirmText}
-              </Text>
+              <Ionicons
+                name="close"
+                size={24}
+                color={colors.text}
+              />
             </Pressable>
           </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.form}
+          >
+
+            {/* FOTO */}
+            <Text style={styles.label}>
+              Foto da peça
+            </Text>
+
+            <Pressable
+              style={styles.photoButton}
+              onPress={handlePickImage}
+            >
+              {image ? (
+                <Image
+                  source={{ uri: image }}
+                  style={styles.previewImage}
+                />
+              ) : (
+                <>
+                  <Ionicons
+                    name="camera-outline"
+                    size={32}
+                    color={colors.primary}
+                  />
+
+                  <Text style={styles.photoText}>
+                    Adicionar foto
+                  </Text>
+                </>
+              )}
+            </Pressable>
+
+            {/* NOME */}
+            <Text style={styles.label}>
+              Nome da peça
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Ex: Camiseta branca"
+              placeholderTextColor={colors.textLight}
+              value={name}
+              onChangeText={setName}
+            />
+
+            {/* CATEGORIA */}
+            <Text style={styles.label}>
+              Categoria
+            </Text>
+
+            <View style={styles.categories}>
+              {categories.map((item) => {
+                const selected = category === item;
+
+                return (
+                  <Pressable
+                    key={item}
+                    onPress={() => setCategory(item)}
+                    style={[
+                      styles.categoryButton,
+                      selected &&
+                        styles.categoryButtonSelected,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        selected &&
+                          styles.categoryTextSelected,
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* COR */}
+            <Text style={styles.label}>
+              Cor
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Ex: Branco"
+              placeholderTextColor={colors.textLight}
+              value={color}
+              onChangeText={setColor}
+            />
+
+            {/* FAVORITO */}
+            <Pressable style={styles.favoriteButton}>
+              <Ionicons
+                name="heart-outline"
+                size={23}
+                color={colors.primary}
+              />
+
+              <Text style={styles.favoriteText}>
+                Adicionar aos favoritos
+              </Text>
+            </Pressable>
+
+            {/* SALVAR */}
+            <Pressable
+              style={styles.saveButton}
+              onPress={handleSave}
+            >
+              <Ionicons
+                name="checkmark"
+                size={21}
+                color={colors.white}
+              />
+
+              <Text style={styles.saveText}>
+                Salvar peça
+              </Text>
+            </Pressable>
+
+          </ScrollView>
+
         </View>
       </View>
     </Modal>
@@ -63,60 +252,149 @@ export default function GRWMModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: theme.spacing.xl,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'flex-end',
   },
 
   container: {
     width: '100%',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.xl,
+    maxHeight: '90%',
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: spacing.lg,
+  },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
   },
 
   title: {
-    color: theme.colors.textDark,
-    fontSize: theme.typography.subtitle.fontSize,
+    fontSize: typography.subtitle,
     fontWeight: '700',
+    color: colors.text,
   },
 
-  message: {
-    color: '#6F5750',
-    fontSize: theme.typography.body.fontSize,
-    lineHeight: 21,
-    marginTop: theme.spacing.md,
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: theme.spacing.xl,
+  form: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
   },
 
-  cancelButton: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+  label: {
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    fontSize: typography.small,
+    fontWeight: '700',
+    color: colors.text,
   },
 
-  cancelText: {
-    color: theme.colors.textDark,
-    fontSize: theme.typography.bodyMedium.fontSize,
+  photoButton: {
+    height: 180,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+
+  photoText: {
+    marginTop: spacing.sm,
+    fontSize: typography.small,
     fontWeight: '600',
+    color: colors.primary,
   },
 
-  confirmButton: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.primary,
-    marginLeft: theme.spacing.sm,
+  input: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    fontSize: typography.body,
+    color: colors.text,
+    backgroundColor: colors.white,
   },
 
-  confirmText: {
-    color: theme.colors.white,
-    fontSize: theme.typography.bodyMedium.fontSize,
+  categories: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+
+  categoryButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.muted,
+  },
+
+  categoryButtonSelected: {
+    backgroundColor: colors.primary,
+  },
+
+  categoryText: {
+    fontSize: typography.small,
+    fontWeight: '600',
+    color: colors.text,
+  },
+
+  categoryTextSelected: {
+    color: colors.white,
+  },
+
+  favoriteButton: {
+    height: 50,
+    marginTop: spacing.lg,
+    borderRadius: radius.md,
+    backgroundColor: colors.background,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  favoriteText: {
+    marginLeft: spacing.sm,
+    fontSize: typography.body,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+
+  saveButton: {
+    height: 52,
+    marginTop: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  saveText: {
+    marginLeft: spacing.sm,
+    fontSize: typography.button,
     fontWeight: '700',
+    color: colors.white,
   },
 });

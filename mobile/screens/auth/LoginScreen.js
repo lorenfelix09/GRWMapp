@@ -56,6 +56,7 @@ export default function LoginScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
 
+      <View style={styles.buttonsContainer}>
           <PrimaryButton
             title="Entrar"
             onPress={() => navigation.replace('Main')}
@@ -69,6 +70,7 @@ export default function LoginScreen({ navigation }) {
             onPress={() => navigation.navigate('Register')}
           />
 
+      </View>
         </View>
     </SafeAreaView>
   );
@@ -90,6 +92,11 @@ const styles = StyleSheet.create({
     width: 270,
     height: 150,
     marginBottom: 0,
+  },
+
+  buttonsContainer: {
+    width: '95%',
+    alignSelf: 'center',
   },
 
   title: {
@@ -131,6 +138,8 @@ const styles = StyleSheet.create({
   or: {
     textAlign: 'center',
     color: COLORS.background,
+    marginVertical: 14,
+    fontSize: 18,
   },
 
   buttons: {
