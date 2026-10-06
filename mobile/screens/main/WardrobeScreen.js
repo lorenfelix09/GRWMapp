@@ -20,7 +20,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS } from '../../constants/colors';
 import { CLOTHING_CATEGORIES } from '../../constants/categories';
-import { 
+
+import {
   criarPecaComImagem,
   excluirPeca,
   listarPecas,
@@ -105,28 +106,27 @@ export default function WardrobeScreen({ navigation }) {
     );
   }
 
- async function handleSavePiece(piece) {
-  try {
-    await criarPecaComImagem(
-      {
-        name: piece.name,
-        category: piece.category,
-        color: piece.color,
-        favorite: piece.favorite || false,
-      },
-      piece.image
-    );
+  async function handleSavePiece(piece) {
+    try {
+      await criarPecaComImagem(
+        {
+          name: piece.name,
+          category: piece.category,
+          color: piece.color,
+          favorite: piece.favorite || false,
+        },
+        piece.image
+      );
 
-    setModalVisible(false);
-    await load();
-  } catch (error) {
-    Alert.alert(
-      'Erro',
-      error.message || 'Não foi possível salvar a peça.'
-    );
+      setModalVisible(false);
+      await load();
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        error.message || 'Não foi possível salvar a peça.'
+      );
+    }
   }
-}
-
 
   const filtered = items.filter((item) => {
     const matchesCategory =
@@ -143,6 +143,7 @@ export default function WardrobeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* HEADER */}
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>
@@ -166,6 +167,7 @@ export default function WardrobeScreen({ navigation }) {
         </Pressable>
       </View>
 
+      {/* BUSCA */}
       <View style={styles.searchContainer}>
         <Ionicons
           name="search-outline"
@@ -182,12 +184,14 @@ export default function WardrobeScreen({ navigation }) {
         />
       </View>
 
+      {/* LISTA */}
       <FlatList
         data={filtered}
         keyExtractor={(item) => String(item.id)}
         numColumns={2}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -299,24 +303,45 @@ export default function WardrobeScreen({ navigation }) {
             onLongPress={() =>
               confirmDelete(item)
             }
+            activeOpacity={0.85}
           >
-            {item.image_url ? (
-              <Image
-                source={{
-                  uri: item.image_url,
-                }}
-                style={styles.image}
-              />
-            ) : (
-              <View style={styles.noImage}>
+            {/* IMAGEM + FAVORITO */}
+            <View style={styles.imageContainer}>
+              {item.image_url ? (
+                <Image
+                  source={{
+                    uri: item.image_url,
+                  }}
+                  style={styles.image}
+                />
+              ) : (
+                <View style={styles.noImage}>
+                  <Ionicons
+                    name="shirt-outline"
+                    size={42}
+                    color={COLORS.primary}
+                  />
+                </View>
+              )}
+
+              <View style={styles.favoriteIcon}>
                 <Ionicons
-                  name="shirt-outline"
-                  size={42}
-                  color={COLORS.primary}
+                  name={
+                    item.favorite
+                      ? 'heart'
+                      : 'heart-outline'
+                  }
+                  size={20}
+                  color={
+                    item.favorite
+                      ? COLORS.primary
+                      : COLORS.text
+                  }
                 />
               </View>
-            )}
+            </View>
 
+            {/* INFORMAÇÕES */}
             <Text
               style={styles.itemName}
               numberOfLines={1}
@@ -331,6 +356,7 @@ export default function WardrobeScreen({ navigation }) {
         )}
       />
 
+      {/* MODAL */}
       <GRWMModal
         visible={modalVisible}
         onClose={() =>
@@ -463,6 +489,10 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
 
+  imageContainer: {
+    position: 'relative',
+  },
+
   image: {
     width: '100%',
     height: 180,
@@ -474,6 +504,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: COLORS.background,
+  },
+
+  favoriteIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.white,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   itemName: {

@@ -3,7 +3,10 @@ import {
   StyleSheet,
   Text,
   View,
+  TouchableOpacity,
 } from 'react-native';
+
+import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS } from '../../constants/colors';
 
@@ -12,16 +15,20 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
 
+        {/* Título */}
         <Text style={styles.title}>
           Meu perfil
         </Text>
 
+        {/* Card do perfil */}
         <View style={styles.profile}>
 
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              👤
-            </Text>
+            <Ionicons
+              name="person"
+              size={38}
+              color={COLORS.primary}
+            />
           </View>
 
           <Text style={styles.name}>
@@ -32,13 +39,52 @@ export default function ProfileScreen() {
             @usuario
           </Text>
 
+          <TouchableOpacity
+            style={styles.editButton}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="create-outline"
+              size={18}
+              color={COLORS.white}
+            />
+
+            <Text style={styles.editButtonText}>
+              Editar perfil
+            </Text>
+          </TouchableOpacity>
+
         </View>
 
+        {/* Menu */}
         <View style={styles.menu}>
-          <MenuItem title="Minhas viagens" />
-          <MenuItem title="Minhas metas" />
-          <MenuItem title="Configurações" />
-          <MenuItem title="Ajuda" />
+
+          <MenuItem
+            icon="shirt-outline"
+            title="Meu closet"
+          />
+
+          <MenuItem
+            icon="heart-outline"
+            title="Favoritos"
+          />
+
+          <MenuItem
+            icon="sparkles-outline"
+            title="Meus looks"
+          />
+
+          <MenuItem
+            icon="settings-outline"
+            title="Configurações"
+          />
+
+          <MenuItem
+            icon="help-circle-outline"
+            title="Ajuda"
+            last
+          />
+
         </View>
 
       </View>
@@ -46,17 +92,38 @@ export default function ProfileScreen() {
   );
 }
 
-function MenuItem({ title }) {
+function MenuItem({ icon, title, last }) {
   return (
-    <View style={styles.menuItem}>
-      <Text style={styles.menuText}>
-        {title}
-      </Text>
+    <TouchableOpacity
+      style={[
+        styles.menuItem,
+        last && styles.lastMenuItem,
+      ]}
+      activeOpacity={0.7}
+    >
+      <View style={styles.menuLeft}>
 
-      <Text style={styles.arrow}>
-        ›
-      </Text>
-    </View>
+        <View style={styles.iconContainer}>
+          <Ionicons
+            name={icon}
+            size={21}
+            color={COLORS.primary}
+          />
+        </View>
+
+        <Text style={styles.menuText}>
+          {title}
+        </Text>
+
+      </View>
+
+      <Ionicons
+        name="chevron-forward"
+        size={20}
+        color={COLORS.secondaryText}
+      />
+
+    </TouchableOpacity>
   );
 }
 
@@ -67,6 +134,7 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    flex: 1,
     padding: 20,
   },
 
@@ -77,7 +145,7 @@ const styles = StyleSheet.create({
   },
 
   profile: {
-    marginTop: 25,
+    marginTop: 24,
     padding: 25,
     alignItems: 'center',
     borderRadius: 20,
@@ -85,28 +153,43 @@ const styles = StyleSheet.create({
   },
 
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 82,
+    height: 82,
+    borderRadius: 41,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.background,
   },
 
-  avatarText: {
-    fontSize: 35,
-  },
-
   name: {
     marginTop: 12,
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '700',
     color: COLORS.text,
   },
 
   username: {
     marginTop: 4,
+    fontSize: 14,
     color: COLORS.secondaryText,
+  },
+
+  editButton: {
+    marginTop: 18,
+    height: 42,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: COLORS.primary,
+  },
+
+  editButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.white,
   },
 
   menu: {
@@ -117,7 +200,7 @@ const styles = StyleSheet.create({
   },
 
   menuItem: {
-    minHeight: 55,
+    minHeight: 62,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -126,12 +209,28 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.border,
   },
 
-  menuText: {
-    color: COLORS.text,
+  lastMenuItem: {
+    borderBottomWidth: 0,
   },
 
-  arrow: {
-    fontSize: 22,
-    color: COLORS.secondaryText,
+  menuLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  iconContainer: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    backgroundColor: COLORS.background,
+  },
+
+  menuText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.text,
   },
 });
