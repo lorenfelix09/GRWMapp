@@ -1,99 +1,97 @@
 import React from 'react';
 import {
-  ActivityIndicator,
   Pressable,
-  StyleSheet,
   Text,
+  StyleSheet,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import theme from '../../theme';
+import {
+  colors,
+  spacing,
+  radius,
+  typography,
+} from '../../theme';
 
 export default function GRWMButton({
   title,
   onPress,
+  icon,
   variant = 'primary',
   disabled = false,
-  loading = false,
 }) {
-  const isSecondary = variant === 'secondary';
   const isOutline = variant === 'outline';
 
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled || loading}
+      disabled={disabled}
       style={({ pressed }) => [
         styles.button,
-
-        isSecondary && styles.secondaryButton,
-        isOutline && styles.outlineButton,
-
+        isOutline ? styles.outline : styles.primary,
         pressed && styles.pressed,
-        (disabled || loading) && styles.disabled,
+        disabled && styles.disabled,
       ]}
     >
-      {loading ? (
-        <ActivityIndicator
-          color={
-            isOutline || isSecondary
-              ? theme.colors.primary
-              : theme.colors.white
-          }
+      {icon && (
+        <Ionicons
+          name={icon}
+          size={20}
+          color={isOutline ? colors.primary : colors.white}
         />
-      ) : (
-        <Text
-          style={[
-            styles.text,
-            isSecondary && styles.secondaryText,
-            isOutline && styles.outlineText,
-          ]}
-        >
-          {title}
-        </Text>
       )}
+
+      <Text
+        style={[
+          styles.text,
+          isOutline ? styles.outlineText : styles.primaryText,
+        ]}
+      >
+        {title}
+      </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 52,
-    paddingHorizontal: theme.spacing.xl,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.primary,
+    minHeight: 54,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
   },
 
-  secondaryButton: {
-    backgroundColor: theme.colors.surface,
+  primary: {
+    backgroundColor: colors.primary,
   },
 
-  outlineButton: {
+  outline: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: theme.colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
   },
 
-  text: {
-    color: theme.colors.white,
-    fontSize: theme.typography.button.fontSize,
-    fontWeight: theme.typography.button.fontWeight,
-  },
-
-  secondaryText: {
-    color: theme.colors.textDark,
+  primaryText: {
+    color: colors.white,
+    fontSize: typography.button,
+    fontWeight: '700',
   },
 
   outlineText: {
-    color: theme.colors.surface,
+    color: colors.primary,
+    fontSize: typography.button,
+    fontWeight: '700',
   },
 
   pressed: {
     opacity: 0.75,
+    transform: [{ scale: 0.98 }],
   },
 
   disabled: {
-    opacity: 0.45,
+    opacity: 0.5,
   },
 });

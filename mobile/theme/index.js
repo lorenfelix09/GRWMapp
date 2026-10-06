@@ -1,79 +1,45 @@
 const colors = {
   primary: '#530F0E',
-  primaryDark: '#30150E',
-  background: '#30150E',
-  surface: '#F8E5D7',
-  surfaceDark: '#3A211A',
-
-  textPrimary: '#F8E5D7',
-  textSecondary: '#CFA9A0',
-  textDark: '#30150E',
-
-  border: '#6F5750',
+  secondary: '#30150E',
+  background: '#F8E5D7',
 
   white: '#FFFFFF',
-  black: '#111111',
+  black: '#000000',
 
-  success: '#587A5B',
-  warning: '#A4773C',
-  danger: '#A84848',
+  text: '#30150E',
+  textLight: '#6F5A52',
+
+  border: '#D8BFB3',
+  muted: '#EBD6CB',
 };
 
 const spacing = {
   xs: 4,
   sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 40,
 };
 
 const radius = {
   sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
+  md: 14,
+  lg: 20,
   pill: 999,
 };
 
 const typography = {
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-
-  subtitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-
-  body: {
-    fontSize: 14,
-    fontWeight: '400',
-  },
-
-  bodyMedium: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
-  caption: {
-    fontSize: 12,
-    fontWeight: '400',
-  },
-
-  button: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
+  title: 28,
+  subtitle: 20,
+  body: 16,
+  small: 14,
+  button: 16,
 };
 
-const theme = {
+export {
   colors,
   spacing,
   radius,
   typography,
 };
-
-export default theme;

@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
 
 import PrimaryButton from '../../components/PrimaryButton';
@@ -16,7 +17,12 @@ export default function LoginScreen({ navigation }) {
       <View style={styles.content}>
 
         <View>
-          <Text style={styles.logo}>GRWM</Text>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        </View> 
 
           <Text style={styles.title}>
             Bem-vindo de volta
@@ -64,8 +70,6 @@ export default function LoginScreen({ navigation }) {
           />
 
         </View>
-
-      </View>
     </SafeAreaView>
   );
 }
@@ -82,15 +86,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
-  logo: {
-    fontSize: 34,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: COLORS.white,
+  logoImage: {
+    width: 270,
+    height: 150,
+    marginBottom: 0,
   },
 
   title: {
-    marginTop: 55,
+    marginTop: 40,
     fontSize: 30,
     fontWeight: '700',
     color: COLORS.white,
@@ -103,7 +106,7 @@ const styles = StyleSheet.create({
   },
 
   form: {
-    gap: 14,
+    gap: 15,
   },
 
   input: {
@@ -114,10 +117,13 @@ const styles = StyleSheet.create({
     borderColor: '#68504A',
     color: COLORS.white,
     backgroundColor: '#24110D',
+    width: '90%',
+    alignSelf: 'center',
   },
 
   forgot: {
     textAlign: 'right',
+    width: '95%',
     fontSize: 13,
     color: COLORS.background,
   },
@@ -125,5 +131,11 @@ const styles = StyleSheet.create({
   or: {
     textAlign: 'center',
     color: COLORS.background,
+  },
+
+  buttons: {
+    width: '90%',
+    alignSelf: 'center',
+    gap: 10,
   },
 });

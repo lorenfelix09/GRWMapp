@@ -3,6 +3,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Image,
 } from 'react-native';
 
 import PrimaryButton from '../../components/PrimaryButton';
@@ -14,8 +15,12 @@ export default function WelcomeScreen({ navigation }) {
       <View style={styles.content}>
 
         <View style={styles.logoArea}>
-          <Text style={styles.logo}>GRWM</Text>
-
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        </View>
           <Text style={styles.tagline}>
             seu guarda-roupa,
             {'\n'}
@@ -29,8 +34,6 @@ export default function WelcomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Onboarding')}
           />
         </View>
-
-      </View>
     </SafeAreaView>
   );
 }
@@ -43,8 +46,8 @@ const styles = StyleSheet.create({
 
   content: {
     flex: 1,
-    padding: 24,
-    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingBottom: 16,
   },
 
   logoArea: {
@@ -53,11 +56,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  logo: {
-    fontSize: 46,
-    fontWeight: '300',
-    letterSpacing: 4,
-    color: COLORS.white,
+  logoImage: {
+    width: 200,
+    height:200,
+    marginBottom:0,
   },
 
   tagline: {
@@ -69,6 +71,7 @@ const styles = StyleSheet.create({
   },
 
   bottomArea: {
-    paddingBottom: 10,
+    width: '90%',
+    alignSelf: 'center',
   },
 });

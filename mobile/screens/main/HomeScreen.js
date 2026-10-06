@@ -1,259 +1,167 @@
+import React from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
   View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  Image,
+  ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import { COLORS } from '../../constants/colors';
+import GRWMButton from '../../components/ui/GRWMButton';
+import { colors, spacing, radius, typography } from '../../theme';
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-
+        {/* LOGO */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.brand}>GRWM</Text>
-            <Text style={styles.greeting}>
-              Oi, Loren!
-            </Text>
-            <Text style={styles.question}>
-              Que tal montar um look hoje?
-            </Text>
-          </View>
+          {/* Por enquanto usamos o nome como logo.
+              Depois colocaremos a imagem real da logo aqui. */}
 
-          <View style={styles.avatar}>
-            <Text>👤</Text>
-          </View>
+          <Text style={styles.slogan}>
+            Get Ready With Me
+          </Text>
         </View>
 
-        <View style={styles.search}>
-          <Text>⌕</Text>
+        {/* SAUDAÇÃO */}
+        <View style={styles.welcome}>
+          <Text style={styles.title}>
+            Seu estilo começa aqui.
+          </Text>
 
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar roupas, looks, ocasiões..."
-            placeholderTextColor={COLORS.muted}
-          />
+          <Text style={styles.description}>
+            Organize suas roupas, monte seus looks
+            e descubra novas combinações.
+          </Text>
         </View>
 
+        {/* AÇÕES PRINCIPAIS */}
         <View style={styles.actions}>
-
-          <QuickAction
-            icon="👕"
+          <GRWMButton
             title="Meu guarda-roupa"
+            icon="shirt-outline"
+            onPress={() => navigation.navigate('Wardrobe')}
           />
 
-          <QuickAction
-            icon="✨"
-            title="Looks"
+          <GRWMButton
+            title="Criar meu look"
+            icon="sparkles-outline"
+            onPress={() => navigation.navigate('Looks')}
           />
 
-          <QuickAction
-            icon="♡"
-            title="Favoritos"
+          <GRWMButton
+            title="Meu perfil"
+            icon="person-outline"
+            variant="outline"
+            onPress={() => navigation.navigate('Profile')}
           />
-
-          <QuickAction
-            icon="🧳"
-            title="Viagem"
-          />
-
         </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
-            Looks em destaque
-          </Text>
+        {/* DICA */}
+        <View style={styles.tip}>
+          <View style={styles.tipIcon}>
+            <Ionicons
+              name="bulb-outline"
+              size={24}
+              color={colors.primary}
+            />
+          </View>
 
-          <Text style={styles.seeAll}>
-            Ver todos ›
-          </Text>
+          <View style={styles.tipContent}>
+            <Text style={styles.tipTitle}>
+              Dica do GRWM
+            </Text>
+
+            <Text style={styles.tipText}>
+              Experimente combinar peças que você
+              normalmente não usaria juntas.
+            </Text>
+          </View>
         </View>
-
-        <View style={styles.lookGrid}>
-
-          <LookCard title="Dia a dia" icon="👗" />
-          <LookCard title="Trabalho" icon="🧥" />
-          <LookCard title="Jantar" icon="👠" />
-
-        </View>
-
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-function QuickAction({ icon, title }) {
-  return (
-    <TouchableOpacity style={styles.action}>
-      <Text style={styles.actionIcon}>
-        {icon}
-      </Text>
-
-      <Text style={styles.actionText}>
-        {title}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
-function LookCard({ title, icon }) {
-  return (
-    <TouchableOpacity style={styles.lookCard}>
-      <View style={styles.lookImage}>
-        <Text style={styles.lookIcon}>
-          {icon}
-        </Text>
-      </View>
-
-      <Text style={styles.lookTitle}>
-        {title}
-      </Text>
-    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
   },
 
   content: {
-    padding: 20,
-    paddingBottom: 30,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
 
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+
+  slogan: {
+    color: colors.secondary,
+    fontSize: typography.small,
+    marginTop: spacing.xs,
+    letterSpacing: 1,
   },
 
-  brand: {
-    fontSize: 22,
+  welcome: {
+    marginBottom: spacing.xl,
+  },
+
+  title: {
+    color: colors.text,
+    fontSize: typography.title,
     fontWeight: '800',
-    letterSpacing: 2,
-    color: COLORS.primary,
+    marginBottom: spacing.sm,
   },
 
-  greeting: {
-    marginTop: 16,
-    fontSize: 23,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-
-  question: {
-    marginTop: 4,
-    fontSize: 14,
-    color: COLORS.secondaryText,
-  },
-
-  avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-  },
-
-  search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 48,
-    marginTop: 22,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: COLORS.white,
-  },
-
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    color: COLORS.text,
+  description: {
+    color: colors.textLight,
+    fontSize: typography.body,
+    lineHeight: 24,
   },
 
   actions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 16,
+    gap: spacing.md,
   },
 
-  action: {
-    flex: 1,
-    minHeight: 92,
-    padding: 8,
-    borderRadius: 14,
-    justifyContent: 'center',
+  tip: {
+    marginTop: spacing.xl,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.white,
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
   },
 
-  actionIcon: {
-    fontSize: 22,
+  tipIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
   },
 
-  actionText: {
-    marginTop: 7,
-    fontSize: 10,
-    textAlign: 'center',
-    fontWeight: '600',
-    color: COLORS.text,
+  tipContent: {
+    flex: 1,
   },
 
-  sectionHeader: {
-    marginTop: 28,
-    marginBottom: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
-  sectionTitle: {
-    fontSize: 19,
+  tipTitle: {
+    color: colors.text,
+    fontSize: typography.body,
     fontWeight: '700',
-    color: COLORS.text,
+    marginBottom: 4,
   },
 
-  seeAll: {
-    fontSize: 13,
-    color: COLORS.primary,
-  },
-
-  lookGrid: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-
-  lookCard: {
-    flex: 1,
-  },
-
-  lookImage: {
-    height: 170,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.placeholder,
-  },
-
-  lookIcon: {
-    fontSize: 45,
-  },
-
-  lookTitle: {
-    marginTop: 7,
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.text,
+  tipText: {
+    color: colors.textLight,
+    fontSize: typography.small,
+    lineHeight: 20,
   },
 });
