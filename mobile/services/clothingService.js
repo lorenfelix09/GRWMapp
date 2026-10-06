@@ -1,5 +1,6 @@
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
+import 'react-native-get-random-values';
 
 import { supabase, getCurrentUserId } from '../lib/supabase';
 
@@ -118,7 +119,7 @@ export async function uploadImagemPeca(localUri, mimeType = 'image/jpeg') {
   });
 
   const extension = getExtension(localUri, mimeType);
-  const path = `${userId}/${crypto.randomUUID()}.${extension}`;
+  const path = `${userId}/${Date.now()}.${extension}`;
 
   const { error } = await supabase.storage
     .from(BUCKET)

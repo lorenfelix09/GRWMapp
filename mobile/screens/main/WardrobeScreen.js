@@ -20,7 +20,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS } from '../../constants/colors';
 import { CLOTHING_CATEGORIES } from '../../constants/categories';
-import { excluirPeca, listarPecas } from '../../services/clothingService';
+import { 
+  criarPecaComImagem,
+  excluirPeca,
+  listarPecas,
+} from '../../services/clothingService';
 
 import GRWMModal from '../../components/ui/GRWMModal';
 
@@ -101,13 +105,28 @@ export default function WardrobeScreen({ navigation }) {
     );
   }
 
-  function handleSavePiece(piece) {
-    setModalVisible(false);
+ async function handleSavePiece(piece) {
+  try {
+    await criarPecaComImagem(
+      {
+        name: piece.name,
+        category: piece.category,
+        color: piece.color,
+        favorite: piece.favorite || false,
+      },
+      piece.image
+    );
 
-    // O cadastro pelo Supabase será conectado aqui.
-    // Por enquanto, recarrega as peças cadastradas.
-    load();
+    setModalVisible(false);
+    await load();
+  } catch (error) {
+    Alert.alert(
+      'Erro',
+      error.message || 'Não foi possível salvar a peça.'
+    );
   }
+}
+
 
   const filtered = items.filter((item) => {
     const matchesCategory =
