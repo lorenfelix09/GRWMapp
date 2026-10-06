@@ -13,6 +13,7 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 
 import MainTabNavigator from './MainTabNavigator';
+import AddClothingScreen from '../screens/main/AddClothingScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -48,6 +49,12 @@ export default function RootNavigator() {
         <Stack.Screen
           name="Main"
           component={MainTabNavigator}
+        />
+
+        <Stack.Screen
+          name="AddClothing"
+          component={AddClothingScreen}
+          options={{ title: 'Adicionar peça' }}
         />
 
       </Stack.Navigator>

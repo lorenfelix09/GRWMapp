@@ -1,174 +1,324 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  RefreshControl,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
   Pressable,
   TextInput,
 } from 'react-native';
 
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS } from '../../constants/colors';
+import { CLOTHING_CATEGORIES } from '../../constants/categories';
+import { excluirPeca, listarPecas } from '../../services/clothingService';
+
 import GRWMModal from '../../components/ui/GRWMModal';
 
-export default function WardrobeScreen() {
+export default function WardrobeScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
 
-  const categories = [
-    { title: 'Blusas', icon: 'shirt-outline' },
-    { title: 'Calças', icon: 'accessibility-outline' },
-    { title: 'Saias', icon: 'woman-outline' },
-    { title: 'Vestidos', icon: 'sparkles-outline' },
-    { title: 'Sapatos', icon: 'footsteps-outline' },
-    { title: 'Acessórios', icon: 'watch-outline' },
-  ];
+  const [items, setItems] = useState([]);
+  const [category, setCategory] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
 
-  function handleAddPiece() {
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setItems(await listarPecas());
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        error.message || 'Não foi possível carregar suas peças.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
+
+  async function refresh() {
+    try {
+      setRefreshing(true);
+      setItems(await listarPecas());
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        error.message || 'Não foi possível atualizar.'
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  function confirmDelete(item) {
+    Alert.alert(
+      'Excluir peça',
+      `Deseja excluir "${item.name}"?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await excluirPeca(item.id);
+
+              setItems((current) =>
+                current.filter(
+                  (piece) => piece.id !== item.id
+                )
+              );
+            } catch (error) {
+              Alert.alert(
+                'Erro',
+                error.message ||
+                  'Não foi possível excluir a peça.'
+              );
+            }
+          },
+        },
+      ]
+    );
+  }
+
+  function handleSavePiece(piece) {
     setModalVisible(false);
 
-    // Aqui vamos colocar depois a lógica
-    // para adicionar a peça ao closet.
+    // O cadastro pelo Supabase será conectado aqui.
+    // Por enquanto, recarrega as peças cadastradas.
+    load();
   }
+
+  const filtered = items.filter((item) => {
+    const matchesCategory =
+      !category || item.category === category;
+
+    const matchesSearch =
+      !search ||
+      item.name
+        ?.toLowerCase()
+        .includes(search.toLowerCase());
+
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>
+            Meu closet
+          </Text>
 
-        {/* HEADER */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>
-              Meu closet
-            </Text>
-
-            <Text style={styles.subtitle}>
-              Organize suas peças
-            </Text>
-          </View>
-
-          <Pressable
-            style={styles.addButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Ionicons
-              name="add"
-              size={26}
-              color={COLORS.white}
-            />
-          </Pressable>
+          <Text style={styles.subtitle}>
+            {items.length} peça(s) cadastrada(s)
+          </Text>
         </View>
 
-        {/* BUSCA */}
-        <View style={styles.searchContainer}>
-          <Ionicons
-            name="search-outline"
-            size={20}
-            color={COLORS.secondaryText}
-          />
-
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar peça..."
-            placeholderTextColor={COLORS.secondaryText}
-          />
-        </View>
-
-        {/* CATEGORIAS */}
-        <Text style={styles.sectionTitle}>
-          Categorias
-        </Text>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categories}
+        <Pressable
+          style={styles.addButton}
+          onPress={() => setModalVisible(true)}
         >
-          {categories.map((category) => (
-            <Pressable
-              key={category.title}
-              style={styles.category}
-            >
-              <View style={styles.categoryIcon}>
+          <Ionicons
+            name="add"
+            size={26}
+            color={COLORS.white}
+          />
+        </Pressable>
+      </View>
+
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search-outline"
+          size={20}
+          color={COLORS.secondaryText}
+        />
+
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar peça..."
+          placeholderTextColor={COLORS.secondaryText}
+          value={search}
+          onChangeText={setSearch}
+        />
+      </View>
+
+      <FlatList
+        data={filtered}
+        keyExtractor={(item) => String(item.id)}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+          />
+        }
+        ListHeaderComponent={
+          <>
+            <Text style={styles.sectionTitle}>
+              Categorias
+            </Text>
+
+            <FlatList
+              horizontal
+              data={[
+                null,
+                ...CLOTHING_CATEGORIES,
+              ]}
+              keyExtractor={(item) =>
+                item || 'all'
+              }
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categories}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.category,
+                    category === item &&
+                      styles.selectedCategory,
+                  ]}
+                  onPress={() =>
+                    setCategory(item)
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.categoryText,
+                      category === item &&
+                        styles.selectedCategoryText,
+                    ]}
+                  >
+                    {item || 'Todas'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                Minhas peças
+              </Text>
+
+              <Text style={styles.counter}>
+                {filtered.length} peças
+              </Text>
+            </View>
+          </>
+        }
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator
+              size="large"
+              color={COLORS.primary}
+              style={styles.loader}
+            />
+          ) : (
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIcon}>
                 <Ionicons
-                  name={category.icon}
-                  size={24}
+                  name="shirt-outline"
+                  size={42}
                   color={COLORS.primary}
                 />
               </View>
 
-              <Text style={styles.categoryTitle}>
-                {category.title}
+              <Text style={styles.emptyTitle}>
+                Seu closet está vazio
               </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
 
-        {/* MINHAS PEÇAS */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
-            Minhas peças
-          </Text>
+              <Text style={styles.emptyText}>
+                Adicione suas roupas para começar
+                a montar seus looks.
+              </Text>
 
-          <Text style={styles.counter}>
-            0 peças
-          </Text>
-        </View>
+              <Pressable
+                style={styles.emptyButton}
+                onPress={() =>
+                  setModalVisible(true)
+                }
+              >
+                <Ionicons
+                  name="add"
+                  size={20}
+                  color={COLORS.white}
+                />
 
-        {/* ESTADO VAZIO */}
-        <View style={styles.emptyContainer}>
-          <View style={styles.emptyIcon}>
-            <Ionicons
-              name="shirt-outline"
-              size={42}
-              color={COLORS.primary}
-            />
-          </View>
-
-          <Text style={styles.emptyTitle}>
-            Seu closet está vazio
-          </Text>
-
-          <Text style={styles.emptyText}>
-            Adicione suas roupas para começar a
-            montar seus looks.
-          </Text>
-
-          <Pressable
-            style={styles.emptyButton}
-            onPress={() => setModalVisible(true)}
+                <Text
+                  style={styles.emptyButtonText}
+                >
+                  Adicionar peça
+                </Text>
+              </Pressable>
+            </View>
+          )
+        }
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.card}
+            onLongPress={() =>
+              confirmDelete(item)
+            }
           >
-            <Ionicons
-              name="add"
-              size={20}
-              color={COLORS.white}
-            />
+            {item.image_url ? (
+              <Image
+                source={{
+                  uri: item.image_url,
+                }}
+                style={styles.image}
+              />
+            ) : (
+              <View style={styles.noImage}>
+                <Ionicons
+                  name="shirt-outline"
+                  size={42}
+                  color={COLORS.primary}
+                />
+              </View>
+            )}
 
-            <Text style={styles.emptyButtonText}>
-              Adicionar peça
+            <Text
+              style={styles.itemName}
+              numberOfLines={1}
+            >
+              {item.name}
             </Text>
-          </Pressable>
-        </View>
 
-      </ScrollView>
-
-      {/* MODAL */}
-      <GRWMModal
-        visible={modalVisible}
-        title="Adicionar peça"
-        message="Deseja adicionar uma nova peça ao seu closet?"
-        onClose={() => setModalVisible(false)}
-        onConfirm={handleAddPiece}
-        confirmText="Adicionar"
-        cancelText="Cancelar"
+            <Text style={styles.itemCategory}>
+              {item.category}
+            </Text>
+          </TouchableOpacity>
+        )}
       />
 
+      <GRWMModal
+        visible={modalVisible}
+        onClose={() =>
+          setModalVisible(false)
+        }
+        onSave={handleSavePiece}
+      />
     </SafeAreaView>
   );
 }
@@ -179,15 +329,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
 
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-
   header: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
   title: {
@@ -213,7 +360,8 @@ const styles = StyleSheet.create({
 
   searchContainer: {
     height: 48,
-    marginTop: 24,
+    marginHorizontal: 20,
+    marginTop: 18,
     paddingHorizontal: 16,
     borderRadius: 14,
     backgroundColor: COLORS.white,
@@ -228,43 +376,51 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
 
+  list: {
+    padding: 20,
+    paddingTop: 8,
+    paddingBottom: 30,
+  },
+
   sectionTitle: {
-    marginTop: 26,
-    marginBottom: 14,
+    marginTop: 18,
+    marginBottom: 10,
     fontSize: 18,
     fontWeight: '700',
     color: COLORS.text,
   },
 
   categories: {
-    paddingBottom: 4,
+    gap: 8,
+    paddingVertical: 8,
   },
 
   category: {
-    width: 82,
-    marginRight: 12,
-    alignItems: 'center',
-  },
-
-  categoryIcon: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderRadius: 18,
     backgroundColor: COLORS.white,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
 
-  categoryTitle: {
-    marginTop: 8,
-    fontSize: 12,
-    fontWeight: '600',
+  selectedCategory: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+
+  categoryText: {
     color: COLORS.text,
-    textAlign: 'center',
+    fontSize: 12,
+  },
+
+  selectedCategoryText: {
+    color: COLORS.white,
+    fontWeight: '700',
   },
 
   sectionHeader: {
-    marginTop: 20,
+    marginTop: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -272,6 +428,46 @@ const styles = StyleSheet.create({
 
   counter: {
     fontSize: 13,
+    color: COLORS.secondaryText,
+  },
+
+  row: {
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  card: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    overflow: 'hidden',
+    paddingBottom: 12,
+  },
+
+  image: {
+    width: '100%',
+    height: 180,
+    resizeMode: 'cover',
+  },
+
+  noImage: {
+    height: 180,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+  },
+
+  itemName: {
+    marginTop: 9,
+    marginHorizontal: 10,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+
+  itemCategory: {
+    marginTop: 3,
+    marginHorizontal: 10,
+    fontSize: 12,
     color: COLORS.secondaryText,
   },
 
@@ -297,6 +493,7 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontWeight: '700',
     color: COLORS.text,
+    textAlign: 'center',
   },
 
   emptyText: {
@@ -323,5 +520,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: COLORS.white,
+  },
+
+  loader: {
+    marginTop: 50,
   },
 });
