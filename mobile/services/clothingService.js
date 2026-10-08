@@ -1,186 +1,117 @@
-import { decode } from 'base64-arraybuffer';
-import * as FileSystem from 'expo-file-system/legacy';
-import 'react-native-get-random-values';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { supabase, getCurrentUserId } from '../lib/supabase';
+const STORAGE_KEY = '@grwm_clothing_items';
 
-const TABLE = 'clothing_items';
-const BUCKET = 'clothing-images';
+async function getItems() {
+  const stored = await AsyncStorage.getItem(STORAGE_KEY);
+
+  if (!stored) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(stored);
+  } catch (error) {
+    console.warn('Não foi possível ler as peças salvas:', error);
+    return [];
+  }
+}
+
+async function saveItems(items) {
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
 
 export async function listarPecas() {
-  const userId = await getCurrentUserId();
-
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-
-  return attachImageUrls(data || []);
+  return getItems();
 }
 
 export async function buscarPeca(id) {
-  const userId = await getCurrentUserId();
+  const items = await getItems();
 
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select('*')
-    .eq('id', id)
-    .eq('user_id', userId)
-    .single();
+  const item = items.find((peca) => peca.id === id);
 
-  if (error) throw error;
+  if (!item) {
+    throw new Error('Peça não encontrada.');
+  }
 
-  const [item] = await attachImageUrls([data]);
   return item;
 }
 
 export async function criarPeca(peca) {
-  const userId = await getCurrentUserId();
+  const items = await getItems();
 
-  const { data, error } = await supabase
-    .from(TABLE)
-    .insert({
-      user_id: userId,
-      name: peca.name,
-      category: peca.category,
-      color: peca.color || null,
-      style: peca.style || null,
-      temperature: peca.temperature || null,
-      image_url: peca.image_url || null,
-      occasion: peca.occasion || [],
-      favorite: peca.favorite || false,
-    })
-    .select()
-    .single();
+  const novaPeca = {
+    id: Date.now().toString(),
+    name: peca.name,
+    category: peca.category,
+    color: peca.color || null,
+    style: peca.style || null,
+    temperature: peca.temperature || null,
+    image_url: peca.image_url || null,
+    occasion: peca.occasion || [],
+    favorite: peca.favorite || false,
+    created_at: new Date().toISOString(),
+  };
 
-  if (error) throw error;
+  const updatedItems = [novaPeca, ...items];
 
-  const [item] = await attachImageUrls([data]);
-  return item;
+  await saveItems(updatedItems);
+
+  return novaPeca;
 }
 
 export async function atualizarPeca(id, alteracoes) {
-  const userId = await getCurrentUserId();
+  const items = await getItems();
 
-  const { data, error } = await supabase
-    .from(TABLE)
-    .update({
-      name: alteracoes.name,
-      category: alteracoes.category,
-      color: alteracoes.color || null,
-      style: alteracoes.style || null,
-      temperature: alteracoes.temperature || null,
-      image_url: alteracoes.image_url || null,
-      occasion: alteracoes.occasion || [],
-      favorite: alteracoes.favorite ?? false,
-    })
-    .eq('id', id)
-    .eq('user_id', userId)
-    .select()
-    .single();
+  const updatedItems = items.map((item) => {
+    if (item.id !== id) {
+      return item;
+    }
 
-  if (error) throw error;
+    return {
+      ...item,
+      name: alteracoes.name ?? item.name,
+      category: alteracoes.category ?? item.category,
+      color: alteracoes.color ?? item.color,
+      style: alteracoes.style ?? item.style,
+      temperature: alteracoes.temperature ?? item.temperature,
+      image_url: alteracoes.image_url ?? item.image_url,
+      occasion: alteracoes.occasion ?? item.occasion,
+      favorite: alteracoes.favorite ?? item.favorite,
+    };
+  });
 
-  const [item] = await attachImageUrls([data]);
-  return item;
+  await saveItems(updatedItems);
+
+  const updatedItem = updatedItems.find((item) => item.id === id);
+
+  if (!updatedItem) {
+    throw new Error('Peça não encontrada.');
+  }
+
+  return updatedItem;
 }
 
 export async function excluirPeca(id) {
-  const userId = await getCurrentUserId();
-  const item = await buscarPeca(id);
+  const items = await getItems();
 
-  const { error } = await supabase
-    .from(TABLE)
-    .delete()
-    .eq('id', id)
-    .eq('user_id', userId);
+  const updatedItems = items.filter((item) => item.id !== id);
 
-  if (error) throw error;
-
-  if (item.image_url) {
-    const { error: storageError } = await supabase.storage
-      .from(BUCKET)
-      .remove([item.image_url]);
-
-    if (storageError) {
-      console.warn('A peça foi excluída, mas a imagem não pôde ser removida:', storageError);
-    }
-  }
+  await saveItems(updatedItems);
 }
 
-export async function uploadImagemPeca(localUri, mimeType = 'image/jpeg') {
-  const userId = await getCurrentUserId();
+export async function uploadImagemPeca(localUri) {
+  // No armazenamento local, usamos diretamente a URI
+  // da imagem escolhida pelo usuário.
+  return localUri;
+}
 
-  const base64 = await FileSystem.readAsStringAsync(localUri, {
-    encoding: FileSystem.EncodingType.Base64,
+export async function criarPecaComImagem(
+  peca,
+  localImageUri
+) {
+  return criarPeca({
+    ...peca,
+    image_url: localImageUri || null,
   });
-
-  const extension = getExtension(localUri, mimeType);
-  const path = `${userId}/${Date.now()}.${extension}`;
-
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, decode(base64), {
-      contentType: mimeType,
-      upsert: false,
-    });
-
-  if (error) throw error;
-
-  return path;
-}
-
-export async function criarPecaComImagem(peca, localImageUri, mimeType = 'image/jpeg') {
-  const imagePath = localImageUri
-    ? await uploadImagemPeca(localImageUri, mimeType)
-    : null;
-
-  try {
-    return await criarPeca({
-      ...peca,
-      image_url: imagePath,
-    });
-  } catch (error) {
-    if (imagePath) {
-      await supabase.storage.from(BUCKET).remove([imagePath]);
-    }
-    throw error;
-  }
-}
-
-async function attachImageUrls(items) {
-  return Promise.all(
-    items.map(async (item) => {
-      if (!item.image_url) return item;
-
-      const { data, error } = await supabase.storage
-        .from(BUCKET)
-        .createSignedUrl(item.image_url, 60 * 60);
-
-      if (error) {
-        console.warn('Não foi possível gerar a URL da imagem:', error);
-        return item;
-      }
-
-      return {
-        ...item,
-        image_url: data?.signedUrl || null,
-        image_path: item.image_url,
-      };
-    })
-  );
-}
-
-function getExtension(uri, mimeType) {
-  const fromMime = mimeType?.split('/')[1];
-  if (fromMime && ['jpeg', 'jpg', 'png', 'webp'].includes(fromMime)) {
-    return fromMime === 'jpeg' ? 'jpg' : fromMime;
-  }
-
-  const cleanUri = uri.split('?')[0];
-  const extension = cleanUri.split('.').pop()?.toLowerCase();
-  return ['jpg', 'jpeg', 'png', 'webp'].includes(extension) ? extension : 'jpg';
 }
