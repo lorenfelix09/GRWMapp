@@ -22,6 +22,7 @@ import { COLORS } from '../../constants/colors';
 import { CLOTHING_CATEGORIES } from '../../constants/categories';
 
 import {
+  atualizarPeca,
   criarPecaComImagem,
   excluirPeca,
   listarPecas,
@@ -31,7 +32,6 @@ import GRWMModal from '../../components/ui/GRWMModal';
 
 export default function WardrobeScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
-
   const [items, setItems] = useState([]);
   const [category, setCategory] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +72,40 @@ export default function WardrobeScreen({ navigation }) {
     }
   }
 
+  async function toggleFavorite(item) {
+    const previousFavorite = item.favorite === true;
+    const newFavorite = !previousFavorite;
+
+    // Atualiza o coração imediatamente na tela.
+    setItems((current) =>
+      current.map((piece) =>
+        piece.id === item.id
+          ? { ...piece, favorite: newFavorite }
+          : piece
+      )
+    );
+
+    try {
+      await atualizarPeca(item.id, {
+        favorite: newFavorite,
+      });
+    } catch (error) {
+      // Restaura o estado anterior se o salvamento falhar.
+      setItems((current) =>
+        current.map((piece) =>
+          piece.id === item.id
+            ? { ...piece, favorite: previousFavorite }
+            : piece
+        )
+      );
+
+      Alert.alert(
+        'Erro',
+        error.message || 'Não foi possível atualizar o favorito.'
+      );
+    }
+  }
+
   function confirmDelete(item) {
     Alert.alert(
       'Excluir peça',
@@ -89,15 +123,12 @@ export default function WardrobeScreen({ navigation }) {
               await excluirPeca(item.id);
 
               setItems((current) =>
-                current.filter(
-                  (piece) => piece.id !== item.id
-                )
+                current.filter((piece) => piece.id !== item.id)
               );
             } catch (error) {
               Alert.alert(
                 'Erro',
-                error.message ||
-                  'Não foi possível excluir a peça.'
+                error.message || 'Não foi possível excluir a peça.'
               );
             }
           },
@@ -134,21 +165,17 @@ export default function WardrobeScreen({ navigation }) {
 
     const matchesSearch =
       !search ||
-      item.name
-        ?.toLowerCase()
-        .includes(search.toLowerCase());
+      item.name?.toLowerCase().includes(search.toLowerCase());
 
     return matchesCategory && matchesSearch;
   });
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* HEADER */}
+      {/* CABEÇALHO */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>
-            Meu closet
-          </Text>
+          <Text style={styles.title}>Meu closet</Text>
 
           <Text style={styles.subtitle}>
             {items.length} peça(s) cadastrada(s)
@@ -158,6 +185,8 @@ export default function WardrobeScreen({ navigation }) {
         <Pressable
           style={styles.addButton}
           onPress={() => setModalVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Adicionar peça"
         >
           <Ionicons
             name="add"
@@ -184,7 +213,7 @@ export default function WardrobeScreen({ navigation }) {
         />
       </View>
 
-      {/* LISTA */}
+      {/* LISTA DE PEÇAS */}
       <FlatList
         data={filtered}
         keyExtractor={(item) => String(item.id)}
@@ -199,32 +228,24 @@ export default function WardrobeScreen({ navigation }) {
           />
         }
         ListHeaderComponent={
-          <>
+          <View>
             <Text style={styles.sectionTitle}>
               Categorias
             </Text>
 
             <FlatList
               horizontal
-              data={[
-                null,
-                ...CLOTHING_CATEGORIES,
-              ]}
-              keyExtractor={(item) =>
-                item || 'all'
-              }
+              data={[null, ...CLOTHING_CATEGORIES]}
+              keyExtractor={(item) => item || 'all'}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.categories}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[
                     styles.category,
-                    category === item &&
-                      styles.selectedCategory,
+                    category === item && styles.selectedCategory,
                   ]}
-                  onPress={() =>
-                    setCategory(item)
-                  }
+                  onPress={() => setCategory(item)}
                 >
                   <Text
                     style={[
@@ -248,7 +269,7 @@ export default function WardrobeScreen({ navigation }) {
                 {filtered.length} peças
               </Text>
             </View>
-          </>
+          </View>
         }
         ListEmptyComponent={
           loading ? (
@@ -268,100 +289,102 @@ export default function WardrobeScreen({ navigation }) {
               </View>
 
               <Text style={styles.emptyTitle}>
-                Seu closet está vazio
+                {items.length === 0
+                  ? 'Seu closet está vazio'
+                  : 'Nenhuma peça encontrada'}
               </Text>
 
               <Text style={styles.emptyText}>
-                Adicione suas roupas para começar
-                a montar seus looks.
+                {items.length === 0
+                  ? 'Adicione suas roupas para começar a montar seus looks.'
+                  : 'Tente mudar a busca ou selecionar outra categoria.'}
               </Text>
 
-              <Pressable
-                style={styles.emptyButton}
-                onPress={() =>
-                  setModalVisible(true)
-                }
-              >
-                <Ionicons
-                  name="add"
-                  size={20}
-                  color={COLORS.white}
-                />
-
-                <Text
-                  style={styles.emptyButtonText}
+              {items.length === 0 && (
+                <Pressable
+                  style={styles.emptyButton}
+                  onPress={() => setModalVisible(true)}
                 >
-                  Adicionar peça
-                </Text>
-              </Pressable>
+                  <Ionicons
+                    name="add"
+                    size={20}
+                    color={COLORS.white}
+                  />
+
+                  <Text style={styles.emptyButtonText}>
+                    Adicionar peça
+                  </Text>
+                </Pressable>
+              )}
             </View>
           )
         }
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onLongPress={() =>
-              confirmDelete(item)
-            }
-            activeOpacity={0.85}
-          >
-            {/* IMAGEM + FAVORITO */}
-            <View style={styles.imageContainer}>
-              {item.image_url ? (
-                <Image
-                  source={{
-                    uri: item.image_url,
-                  }}
-                  style={styles.image}
-                />
-              ) : (
-                <View style={styles.noImage}>
-                  <Ionicons
-                    name="shirt-outline"
-                    size={42}
-                    color={COLORS.primary}
-                  />
-                </View>
-              )}
-
-              <View style={styles.favoriteIcon}>
-                <Ionicons
-                  name={
-                    item.favorite
-                      ? 'heart'
-                      : 'heart-outline'
-                  }
-                  size={20}
-                  color={
-                    item.favorite
-                      ? COLORS.primary
-                      : COLORS.text
-                  }
-                />
-              </View>
-            </View>
-
-            {/* INFORMAÇÕES */}
-            <Text
-              style={styles.itemName}
-              numberOfLines={1}
+          <View style={styles.card}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onLongPress={() => confirmDelete(item)}
+              accessibilityLabel={`${item.name}. Pressione e segure para excluir.`}
             >
-              {item.name}
-            </Text>
+              <View style={styles.imageContainer}>
+                {item.image_url ? (
+                  <Image
+                    source={{ uri: item.image_url }}
+                    style={styles.image}
+                  />
+                ) : (
+                  <View style={styles.noImage}>
+                    <Ionicons
+                      name="shirt-outline"
+                      size={42}
+                      color={COLORS.primary}
+                    />
+                  </View>
+                )}
+              </View>
 
-            <Text style={styles.itemCategory}>
-              {item.category}
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={styles.itemName}
+                numberOfLines={1}
+              >
+                {item.name}
+              </Text>
+
+              <Text style={styles.itemCategory}>
+                {item.category}
+              </Text>
+            </TouchableOpacity>
+
+            {/* BOTÃO DE FAVORITO */}
+            <Pressable
+              style={styles.favoriteIcon}
+              onPress={() => toggleFavorite(item)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={
+                item.favorite
+                  ? `Remover ${item.name} dos favoritos`
+                  : `Adicionar ${item.name} aos favoritos`
+              }
+            >
+              <Ionicons
+                name={
+                  item.favorite ? 'heart' : 'heart-outline'
+                }
+                size={20}
+                color={
+                  item.favorite ? COLORS.primary : COLORS.text
+                }
+              />
+            </Pressable>
+          </View>
         )}
       />
 
-      {/* MODAL */}
+      {/* MODAL PARA ADICIONAR PEÇA */}
       <GRWMModal
         visible={modalVisible}
-        onClose={() =>
-          setModalVisible(false)
-        }
+        onClose={() => setModalVisible(false)}
         onSave={handleSavePiece}
       />
     </SafeAreaView>
@@ -425,6 +448,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 8,
     paddingBottom: 30,
+    flexGrow: 1,
   },
 
   sectionTitle: {
@@ -483,6 +507,7 @@ const styles = StyleSheet.create({
 
   card: {
     flex: 1,
+    position: 'relative',
     backgroundColor: COLORS.white,
     borderRadius: 16,
     overflow: 'hidden',
@@ -516,6 +541,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 2,
+    elevation: 3,
   },
 
   itemName: {

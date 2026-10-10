@@ -17,7 +17,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS } from '../../constants/colors';
-import { listarPecas } from '../../services/clothingService';
+
+import {
+  atualizarPeca,
+  listarPecas,
+} from '../../services/clothingService';
 
 export default function FavoritesScreen({ navigation }) {
   const [favorites, setFavorites] = useState([]);
@@ -30,11 +34,9 @@ export default function FavoritesScreen({ navigation }) {
 
       const items = await listarPecas();
 
-      const favoriteItems = items.filter(
-        (item) => item.favorite === true
+      setFavorites(
+        items.filter((item) => item.favorite === true)
       );
-
-      setFavorites(favoriteItems);
     } catch (error) {
       Alert.alert(
         'Erro',
@@ -57,11 +59,9 @@ export default function FavoritesScreen({ navigation }) {
 
       const items = await listarPecas();
 
-      const favoriteItems = items.filter(
-        (item) => item.favorite === true
+      setFavorites(
+        items.filter((item) => item.favorite === true)
       );
-
-      setFavorites(favoriteItems);
     } catch (error) {
       Alert.alert(
         'Erro',
@@ -72,8 +72,26 @@ export default function FavoritesScreen({ navigation }) {
     }
   }
 
+  async function removeFavorite(item) {
+    try {
+      await atualizarPeca(item.id, {
+        favorite: false,
+      });
+
+      setFavorites((current) =>
+        current.filter((piece) => piece.id !== item.id)
+      );
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        error.message || 'Não foi possível remover dos favoritos.'
+      );
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
+      {/* CABEÇALHO */}
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>
@@ -94,6 +112,7 @@ export default function FavoritesScreen({ navigation }) {
         </View>
       </View>
 
+      {/* LISTA DE FAVORITOS */}
       <FlatList
         data={favorites}
         keyExtractor={(item) => String(item.id)}
@@ -129,15 +148,13 @@ export default function FavoritesScreen({ navigation }) {
               </Text>
 
               <Text style={styles.emptyText}>
-                Suas peças favoritas aparecerão
-                aqui.
+                Suas peças favoritas aparecerão aqui.
               </Text>
 
               <TouchableOpacity
                 style={styles.button}
-                onPress={() =>
-                  navigation.navigate('Wardrobe')
-                }
+                onPress={() => navigation.navigate('Wardrobe')}
+                accessibilityRole="button"
               >
                 <Ionicons
                   name="shirt-outline"
@@ -153,16 +170,11 @@ export default function FavoritesScreen({ navigation }) {
           )
         }
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            activeOpacity={0.85}
-          >
+          <View style={styles.card}>
             <View style={styles.imageContainer}>
               {item.image_url ? (
                 <Image
-                  source={{
-                    uri: item.image_url,
-                  }}
+                  source={{ uri: item.image_url }}
                   style={styles.image}
                 />
               ) : (
@@ -175,13 +187,20 @@ export default function FavoritesScreen({ navigation }) {
                 </View>
               )}
 
-              <View style={styles.favoriteIcon}>
+              {/* BOTÃO PARA DESFAVORITAR */}
+              <TouchableOpacity
+                style={styles.favoriteIcon}
+                onPress={() => removeFavorite(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`Remover ${item.name} dos favoritos`}
+                hitSlop={8}
+              >
                 <Ionicons
                   name="heart"
                   size={20}
                   color={COLORS.primary}
                 />
-              </View>
+              </TouchableOpacity>
             </View>
 
             <Text
@@ -194,7 +213,7 @@ export default function FavoritesScreen({ navigation }) {
             <Text style={styles.itemCategory}>
               {item.category}
             </Text>
-          </TouchableOpacity>
+          </View>
         )}
       />
     </SafeAreaView>
@@ -241,6 +260,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 8,
     paddingBottom: 30,
+    flexGrow: 1,
   },
 
   row: {
@@ -283,6 +303,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 2,
+    elevation: 3,
   },
 
   itemName: {
