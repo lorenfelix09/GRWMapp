@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+
+import React, { useEffect, useState } from 'react';
 
 import {
+  Alert,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -8,7 +11,6 @@ import {
   Text,
   TextInput,
   View,
-  Image,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +23,15 @@ import {
   typography,
 } from '../../theme';
 
+const CATEGORIES = [
+  'Blusas',
+  'Calças',
+  'Saias',
+  'Vestidos',
+  'Sapatos',
+  'Acessórios',
+];
+
 export default function GRWMModal({
   visible,
   onClose,
@@ -31,76 +42,84 @@ export default function GRWMModal({
   const [category, setCategory] = useState('');
   const [image, setImage] = useState(null);
 
-  const categories = [
-    'Blusas',
-    'Calças',
-    'Saias',
-    'Vestidos',
-    'Sapatos',
-    'Acessórios',
-  ];
+  useEffect(() => {
+    if (!visible) {
+      setName('');
+      setColor('');
+      setCategory('');
+      setImage(null);
+    }
+  }, [visible]);
 
   async function handlePickImage() {
-    const permission =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (!permission.granted) {
-      return;
-    }
+      if (!permission.granted) {
+        Alert.alert(
+          'Permissão necessária',
+          'Precisamos de acesso à galeria para escolher uma imagem.'
+        );
+        return;
+      }
 
-    const result =
-      await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
+      const result =
+        await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [3, 4],
+          quality: 0.8,
+        });
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      if (!result.canceled && result.assets.length > 0) {
+        setImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        'Não foi possível abrir a galeria de imagens.'
+      );
     }
   }
 
   function handleSave() {
-    const piece = {
-      name,
-      category,
-      color,
-      image,
-    };
-
-    if (onSave) {
-      onSave(piece);
+    if (!name.trim()) {
+      Alert.alert(
+        'Campo obrigatório',
+        'Digite o nome da peça.'
+      );
+      return;
     }
 
-    setName('');
-    setCategory('');
-    setColor('');
-    setImage(null);
+    if (!category) {
+      Alert.alert(
+        'Campo obrigatório',
+        'Selecione uma categoria.'
+      );
+      return;
+    }
 
-    onClose();
-  }
+    const piece = {
+      name: name.trim(),
+      category,
+      color: color.trim(),
+      image,
+      favorite: false,
+    };
 
-  function handleClose() {
-    setName('');
-    setCategory('');
-    setColor('');
-    setImage(null);
-
-    onClose();
+    onSave(piece);
   }
 
   return (
     <Modal
       visible={visible}
-      transparent
       animationType="slide"
-      onRequestClose={handleClose}
+      transparent
+      onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-
-        <View style={styles.container}>
-
+        <View style={styles.modalContainer}>
           {/* CABEÇALHO */}
           <View style={styles.header}>
             <Text style={styles.title}>
@@ -108,8 +127,9 @@ export default function GRWMModal({
             </Text>
 
             <Pressable
-              onPress={handleClose}
+              onPress={onClose}
               style={styles.closeButton}
+              accessibilityLabel="Fechar modal"
             >
               <Ionicons
                 name="close"
@@ -121,16 +141,11 @@ export default function GRWMModal({
 
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.form}
+            keyboardShouldPersistTaps="handled"
           >
-
-            {/* FOTO */}
-            <Text style={styles.label}>
-              Foto da peça
-            </Text>
-
+            {/* IMAGEM */}
             <Pressable
-              style={styles.photoButton}
+              style={styles.imagePicker}
               onPress={handlePickImage}
             >
               {image ? (
@@ -142,54 +157,85 @@ export default function GRWMModal({
                 <>
                   <Ionicons
                     name="camera-outline"
-                    size={32}
+                    size={36}
                     color={colors.primary}
                   />
 
-                  <Text style={styles.photoText}>
-                    Adicionar foto
+                  <Text style={styles.imagePickerText}>
+                    Adicionar foto da peça
                   </Text>
                 </>
               )}
             </Pressable>
 
+            {image && (
+              <Pressable
+                style={styles.removeImageButton}
+                onPress={() => setImage(null)}
+              >
+                <Ionicons
+                  name="trash-outline"
+                  size={16}
+                  color={colors.primary}
+                />
+
+                <Text style={styles.removeImageText}>
+                  Remover foto
+                </Text>
+              </Pressable>
+            )}
+
             {/* NOME */}
             <Text style={styles.label}>
-              Nome da peça
+              Nome da peça *
             </Text>
 
             <TextInput
               style={styles.input}
-              placeholder="Ex: Camiseta branca"
-              placeholderTextColor={colors.textLight}
+              placeholder="Ex.: Camiseta branca"
+              placeholderTextColor={colors.secondaryText}
               value={name}
               onChangeText={setName}
+              maxLength={60}
+            />
+
+            {/* COR */}
+            <Text style={styles.label}>
+              Cor
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Ex.: Branco"
+              placeholderTextColor={colors.secondaryText}
+              value={color}
+              onChangeText={setColor}
+              maxLength={30}
             />
 
             {/* CATEGORIA */}
             <Text style={styles.label}>
-              Categoria
+              Categoria *
             </Text>
 
-            <View style={styles.categories}>
-              {categories.map((item) => {
+            <View style={styles.categoriesContainer}>
+              {CATEGORIES.map((item) => {
                 const selected = category === item;
 
                 return (
                   <Pressable
                     key={item}
-                    onPress={() => setCategory(item)}
                     style={[
                       styles.categoryButton,
-                      selected &&
-                        styles.categoryButtonSelected,
+                      selected && styles.selectedCategory,
                     ]}
+                    onPress={() => setCategory(item)}
                   >
                     <Text
                       style={[
                         styles.categoryText,
                         selected &&
-                          styles.categoryTextSelected,
+                          styles.selectedCategoryText,
                       ]}
                     >
                       {item}
@@ -199,50 +245,25 @@ export default function GRWMModal({
               })}
             </View>
 
-            {/* COR */}
-            <Text style={styles.label}>
-              Cor
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Ex: Branco"
-              placeholderTextColor={colors.textLight}
-              value={color}
-              onChangeText={setColor}
-            />
-
-            {/* FAVORITO */}
-            <Pressable style={styles.favoriteButton}>
-              <Ionicons
-                name="heart-outline"
-                size={23}
-                color={colors.primary}
-              />
-
-              <Text style={styles.favoriteText}>
-                Adicionar aos favoritos
-              </Text>
-            </Pressable>
-
-            {/* SALVAR */}
+            {/* BOTÕES */}
             <Pressable
               style={styles.saveButton}
               onPress={handleSave}
             >
-              <Ionicons
-                name="checkmark"
-                size={21}
-                color={colors.white}
-              />
-
-              <Text style={styles.saveText}>
+              <Text style={styles.saveButtonText}>
                 Salvar peça
               </Text>
             </Pressable>
 
+            <Pressable
+              style={styles.cancelButton}
+              onPress={onClose}
+            >
+              <Text style={styles.cancelButtonText}>
+                Cancelar
+              </Text>
+            </Pressable>
           </ScrollView>
-
         </View>
       </View>
     </Modal>
@@ -252,65 +273,45 @@ export default function GRWMModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
 
-  container: {
-    width: '100%',
+  modalContainer: {
     maxHeight: '90%',
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingTop: spacing.lg,
+    backgroundColor: colors.background,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    padding: spacing.lg,
   },
 
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
 
   title: {
-    fontSize: typography.subtitle,
-    fontWeight: '700',
+    ...typography.h2,
     color: colors.text,
   },
 
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: spacing.xs,
   },
 
-  form: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
-  },
-
-  label: {
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-    fontSize: typography.small,
-    fontWeight: '700',
-    color: colors.text,
-  },
-
-  photoButton: {
+  imagePicker: {
     height: 180,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    borderWidth: 1,
     borderStyle: 'dashed',
-    backgroundColor: colors.background,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    marginBottom: spacing.md,
   },
 
   previewImage: {
@@ -319,82 +320,100 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
 
-  photoText: {
+  imagePickerText: {
     marginTop: spacing.sm,
-    fontSize: typography.small,
-    fontWeight: '600',
     color: colors.primary,
+    fontSize: 14,
+  },
+
+  removeImageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+    gap: spacing.xs,
+  },
+
+  removeImageText: {
+    color: colors.primary,
+    fontSize: 13,
+  },
+
+  label: {
+    ...typography.body,
+    color: colors.text,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+    marginTop: spacing.sm,
   },
 
   input: {
-    height: 50,
+    minHeight: 48,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
-    fontSize: typography.body,
     color: colors.text,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
+    fontSize: 15,
   },
 
-  categories: {
+  categoriesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
+    marginTop: spacing.xs,
   },
 
   categoryButton: {
-    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.full,
     paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    backgroundColor: colors.muted,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surface,
   },
 
-  categoryButtonSelected: {
+  selectedCategory: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
 
   categoryText: {
-    fontSize: typography.small,
-    fontWeight: '600',
     color: colors.text,
+    fontSize: 13,
   },
 
-  categoryTextSelected: {
-    color: colors.white,
-  },
-
-  favoriteButton: {
-    height: 50,
-    marginTop: spacing.lg,
-    borderRadius: radius.md,
-    backgroundColor: colors.background,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  favoriteText: {
-    marginLeft: spacing.sm,
-    fontSize: typography.body,
+  selectedCategoryText: {
+    color: colors.onPrimary || '#FFFFFF',
     fontWeight: '600',
-    color: colors.primary,
   },
 
   saveButton: {
-    height: 52,
-    marginTop: spacing.md,
+    minHeight: 50,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: spacing.xl,
   },
 
-  saveText: {
-    marginLeft: spacing.sm,
-    fontSize: typography.button,
+  saveButtonText: {
+    color: colors.onPrimary || '#FFFFFF',
+    fontSize: 16,
     fontWeight: '700',
-    color: colors.white,
+  },
+
+  cancelButton: {
+    minHeight: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+  },
+
+  cancelButtonText: {
+    color: colors.text,
+    fontSize: 15,
   },
 });

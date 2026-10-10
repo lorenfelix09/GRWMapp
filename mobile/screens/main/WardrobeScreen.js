@@ -1,3 +1,4 @@
+
 import React, { useCallback, useState } from 'react';
 
 import {
@@ -5,14 +6,14 @@ import {
   Alert,
   FlatList,
   Image,
+  Pressable,
   RefreshControl,
   SafeAreaView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
-  Pressable,
-  TextInput,
 } from 'react-native';
 
 import { useFocusEffect } from '@react-navigation/native';
@@ -31,7 +32,6 @@ import GRWMModal from '../../components/ui/GRWMModal';
 
 export default function WardrobeScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
-
   const [items, setItems] = useState([]);
   const [category, setCategory] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -89,15 +89,12 @@ export default function WardrobeScreen({ navigation }) {
               await excluirPeca(item.id);
 
               setItems((current) =>
-                current.filter(
-                  (piece) => piece.id !== item.id
-                )
+                current.filter((piece) => piece.id !== item.id)
               );
             } catch (error) {
               Alert.alert(
                 'Erro',
-                error.message ||
-                  'Não foi possível excluir a peça.'
+                error.message || 'Não foi possível excluir a peça.'
               );
             }
           },
@@ -129,27 +126,21 @@ export default function WardrobeScreen({ navigation }) {
   }
 
   const filtered = items.filter((item) => {
-    const matchesCategory =
-      !category || item.category === category;
+    const matchesCategory = !category || item.category === category;
 
     const matchesSearch =
       !search ||
-      item.name
-        ?.toLowerCase()
-        .includes(search.toLowerCase());
+      item.name?.toLowerCase().includes(search.toLowerCase());
 
     return matchesCategory && matchesSearch;
   });
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* HEADER */}
+      {/* CABEÇALHO */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>
-            Meu closet
-          </Text>
-
+          <Text style={styles.title}>Meu closet</Text>
           <Text style={styles.subtitle}>
             {items.length} peça(s) cadastrada(s)
           </Text>
@@ -159,15 +150,11 @@ export default function WardrobeScreen({ navigation }) {
           style={styles.addButton}
           onPress={() => setModalVisible(true)}
         >
-          <Ionicons
-            name="add"
-            size={26}
-            color={COLORS.white}
-          />
+          <Ionicons name="add" size={26} color={COLORS.white} />
         </Pressable>
       </View>
 
-      {/* BUSCA */}
+      {/* CAMPO DE BUSCA */}
       <View style={styles.searchContainer}>
         <Ionicons
           name="search-outline"
@@ -184,7 +171,7 @@ export default function WardrobeScreen({ navigation }) {
         />
       </View>
 
-      {/* LISTA */}
+      {/* LISTA DE ROUPAS */}
       <FlatList
         data={filtered}
         keyExtractor={(item) => String(item.id)}
@@ -200,31 +187,21 @@ export default function WardrobeScreen({ navigation }) {
         }
         ListHeaderComponent={
           <>
-            <Text style={styles.sectionTitle}>
-              Categorias
-            </Text>
+            <Text style={styles.sectionTitle}>Categorias</Text>
 
             <FlatList
               horizontal
-              data={[
-                null,
-                ...CLOTHING_CATEGORIES,
-              ]}
-              keyExtractor={(item) =>
-                item || 'all'
-              }
+              data={[null, ...CLOTHING_CATEGORIES]}
+              keyExtractor={(item) => item || 'all'}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.categories}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[
                     styles.category,
-                    category === item &&
-                      styles.selectedCategory,
+                    category === item && styles.selectedCategory,
                   ]}
-                  onPress={() =>
-                    setCategory(item)
-                  }
+                  onPress={() => setCategory(item)}
                 >
                   <Text
                     style={[
@@ -240,10 +217,7 @@ export default function WardrobeScreen({ navigation }) {
             />
 
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
-                Minhas peças
-              </Text>
-
+              <Text style={styles.sectionTitle}>Minhas peças</Text>
               <Text style={styles.counter}>
                 {filtered.length} peças
               </Text>
@@ -272,25 +246,19 @@ export default function WardrobeScreen({ navigation }) {
               </Text>
 
               <Text style={styles.emptyText}>
-                Adicione suas roupas para começar
-                a montar seus looks.
+                Adicione suas roupas para começar a montar seus looks.
               </Text>
 
               <Pressable
                 style={styles.emptyButton}
-                onPress={() =>
-                  setModalVisible(true)
-                }
+                onPress={() => setModalVisible(true)}
               >
                 <Ionicons
                   name="add"
                   size={20}
                   color={COLORS.white}
                 />
-
-                <Text
-                  style={styles.emptyButtonText}
-                >
+                <Text style={styles.emptyButtonText}>
                   Adicionar peça
                 </Text>
               </Pressable>
@@ -300,18 +268,14 @@ export default function WardrobeScreen({ navigation }) {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
-            onLongPress={() =>
-              confirmDelete(item)
-            }
+            onLongPress={() => confirmDelete(item)}
             activeOpacity={0.85}
           >
-            {/* IMAGEM + FAVORITO */}
+            {/* IMAGEM E FAVORITO */}
             <View style={styles.imageContainer}>
               {item.image_url ? (
                 <Image
-                  source={{
-                    uri: item.image_url,
-                  }}
+                  source={{ uri: item.image_url }}
                   style={styles.image}
                 />
               ) : (
@@ -327,25 +291,18 @@ export default function WardrobeScreen({ navigation }) {
               <View style={styles.favoriteIcon}>
                 <Ionicons
                   name={
-                    item.favorite
-                      ? 'heart'
-                      : 'heart-outline'
+                    item.favorite ? 'heart' : 'heart-outline'
                   }
                   size={20}
                   color={
-                    item.favorite
-                      ? COLORS.primary
-                      : COLORS.text
+                    item.favorite ? COLORS.primary : COLORS.text
                   }
                 />
               </View>
             </View>
 
-            {/* INFORMAÇÕES */}
-            <Text
-              style={styles.itemName}
-              numberOfLines={1}
-            >
+            {/* INFORMAÇÕES DA PEÇA */}
+            <Text style={styles.itemName} numberOfLines={1}>
               {item.name}
             </Text>
 
@@ -356,12 +313,10 @@ export default function WardrobeScreen({ navigation }) {
         )}
       />
 
-      {/* MODAL */}
+      {/* MODAL DE CADASTRO */}
       <GRWMModal
         visible={modalVisible}
-        onClose={() =>
-          setModalVisible(false)
-        }
+        onClose={() => setModalVisible(false)}
         onSave={handleSavePiece}
       />
     </SafeAreaView>
